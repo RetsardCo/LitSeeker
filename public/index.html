@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LitFinder • Capstone Chapter 2 Literature & Synthesis Studio</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- TOP NAVBAR -->
+  <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <i data-lucide="graduation-cap" class="w-6 h-6 text-white"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-lg tracking-tight text-white">LitFinder</span>
+            <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">Chapter 2 Studio</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Review of Related Literature & Studies (RRL / RRS) Discovery Hub</p>
+        </div>
+      </div>
+
+      <!-- Action Center -->
+      <div class="flex items-center gap-3">
+        
+        <!-- Active Citation Style Selector -->
+        <div class="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/80 px-2.5 py-1.5 rounded-lg text-xs">
+          <i data-lucide="quote" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span class="text-slate-400 hidden md:inline">Style:</span>
+          <select id="headerCitationStyle" onchange="window.handleGlobalCitationStyleChange(this.value)"
+            class="bg-transparent text-slate-200 font-semibold focus:outline-none cursor-pointer">
+            <option value="apa7" class="bg-slate-900">APA 7th</option>
+            <option value="ieee" class="bg-slate-900">IEEE</option>
+            <option value="mla9" class="bg-slate-900">MLA 9th</option>
+            <option value="chicago" class="bg-slate-900">Chicago</option>
+            <option value="harvard" class="bg-slate-900">Harvard</option>
+            <option value="bibtex" class="bg-slate-900">BibTeX</option>
+          </select>
+        </div>
+
+        <!-- My RRL Binder Drawer Button -->
+        <button id="btnOpenBinder" onclick="window.toggleBinderDrawer()" 
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-600 bg-slate-800/60 hover:bg-slate-800 text-xs font-medium text-slate-200 transition-all">
+          <i data-lucide="bookmark" class="w-4 h-4 text-amber-400"></i>
+          <span>My RRL Binder</span>
+          <span id="binderCounter" class="ml-1 px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[11px] font-bold">0</span>
+        </button>
+
+        <!-- Export Dropdown Button -->
+        <div class="relative">
+          <button id="btnExportMenu" onclick="window.toggleExportDropdown()"
+            class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Export RRL</span>
+            <i data-lucide="chevron-down" class="w-3 h-3 ml-0.5"></i>
+          </button>
+          
+          <div id="exportDropdownMenu" class="hidden absolute right-0 mt-2 w-56 rounded-xl bg-slate-900 border border-slate-700/80 shadow-2xl p-1.5 z-50 text-xs">
+            <button onclick="window.triggerExport('csv')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white flex items-center gap-2">
+              <i data-lucide="sheet" class="w-4 h-4 text-emerald-400"></i>
+              <div>
+                <div class="font-medium">Synthesis Matrix (CSV / Excel)</div>
+                <div class="text-[10px] text-slate-500">Structured table with gaps & methods</div>
+              </div>
+            </button>
+            <button onclick="window.triggerExport('bibtex')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white flex items-center gap-2">
+              <i data-lucide="code-2" class="w-4 h-4 text-cyan-400"></i>
+              <div>
+                <div class="font-medium">BibTeX File (.bib)</div>
+                <div class="text-[10px] text-slate-500">For Overleaf, LaTeX, & Zotero</div>
+              </div>
+            </button>
+            <button onclick="window.triggerExport('ris')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white flex items-center gap-2">
+              <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i>
+              <div>
+                <div class="font-medium">RIS Citations (.ris)</div>
+                <div class="text-[10px] text-slate-500">For Mendeley & EndNote</div>
+              </div>
+            </button>
+            <button onclick="window.triggerExport('markdown')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white flex items-center gap-2">
+              <i data-lucide="file-code" class="w-4 h-4 text-amber-400"></i>
+              <div>
+                <div class="font-medium">Chapter 2 Draft (.md)</div>
+                <div class="text-[10px] text-slate-500">Ready to paste into Word or Docs</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+
+    <!-- HERO SEARCH SECTION -->
+    <section class="glass-panel rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-xl relative overflow-hidden">
+      <!-- Glow effect -->
+      <div class="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="max-w-3xl mb-4">
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          Find Related Literature for Chapter 2
+        </h1>
+        <p class="text-slate-400 text-sm mt-1.5">
+          Paste your Capstone Title or keywords. Searches 250M+ open academic records across OpenAlex and arXiv with verified DOIs, direct OA PDFs, and semantic similarity ranking.
+        </p>
+      </div>
+
+      <!-- Search Input Form -->
+      <form id="searchForm" onsubmit="window.handleSearchSubmit(event)" class="space-y-4">
+        <div class="relative">
+          <textarea id="searchQueryInput" rows="2"
+            placeholder="e.g. Paste your Capstone Title: 'Automated Crop Disease Detection & Pest Classification Using Convolutional Neural Networks on Embedded Raspberry Pi' or search by variables..."
+            class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 pr-28 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none shadow-inner"></textarea>
+          
+          <button type="submit" id="btnSubmitSearch"
+            class="absolute right-3 bottom-3.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-indigo-600/30 transition-all">
+            <i data-lucide="search" class="w-4 h-4"></i>
+            <span>Search Literature</span>
+          </button>
+        </div>
+
+        <!-- Curated Capstone Archetypes (1-Click Fill) -->
+        <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
+          <span class="text-slate-500 font-medium flex items-center gap-1">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span>Capstone Examples:</span>
+          </span>
+          <button type="button" onclick="window.fillSample(0)" class="px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors">
+            🌱 Crop Disease CNN (IoT)
+          </button>
+          <button type="button" onclick="window.fillSample(1)" class="px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors">
+            🐟 Aquaponics Telemetry (ML)
+          </button>
+          <button type="button" onclick="window.fillSample(2)" class="px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors">
+            😀 Facial Emotion in E-Learning
+          </button>
+          <button type="button" onclick="window.fillSample(3)" class="px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors">
+            🔗 Blockchain Medical Records
+          </button>
+          <button type="button" onclick="window.fillSample(4)" class="px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors">
+            🚁 Drone Obstacle Avoidance
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- FILTER & VIEW CONTROLS TOOLBAR -->
+    <section class="flex flex-wrap items-center justify-between gap-4 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 text-xs">
+      
+      <!-- Quick Filter Toggles -->
+      <div class="flex flex-wrap items-center gap-3">
+        
+        <!-- Last 5 Years Capstone Compliance Toggle -->
+        <label class="flex items-center gap-2 cursor-pointer bg-slate-800/70 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 transition-all select-none">
+          <input type="checkbox" id="filterRecentYears" onchange="window.triggerRefilter()" class="rounded border-slate-600 text-indigo-600 focus:ring-0">
+          <span class="font-medium text-slate-200">Last 5 Years (2021-2026)</span>
+          <span class="px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-400 font-bold text-[10px]">Capstone Rule</span>
+        </label>
+
+        <!-- Open Access PDF Only Toggle -->
+        <label class="flex items-center gap-2 cursor-pointer bg-slate-800/70 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 transition-all select-none">
+          <input type="checkbox" id="filterOpenAccessOnly" onchange="window.triggerRefilter()" class="rounded border-slate-600 text-emerald-600 focus:ring-0">
+          <span class="font-medium text-slate-200">Open Access (PDF Available)</span>
+          <i data-lucide="file-down" class="w-3.5 h-3.5 text-emerald-400"></i>
+        </label>
+
+        <!-- Repository Source Dropdown -->
+        <div class="flex items-center gap-1.5 bg-slate-800/70 px-2.5 py-1.5 rounded-lg border border-slate-700">
+          <span class="text-slate-400">Database:</span>
+          <select id="filterSource" onchange="window.triggerRefilter()" class="bg-transparent text-slate-200 font-medium focus:outline-none cursor-pointer">
+            <option value="all" class="bg-slate-900">All Sources (OpenAlex + arXiv)</option>
+            <option value="openalex" class="bg-slate-900">OpenAlex (250M+ Works)</option>
+            <option value="arxiv" class="bg-slate-900">arXiv (CS & STEM Preprints)</option>
+          </select>
+        </div>
+
+        <!-- Sort By Dropdown -->
+        <div class="flex items-center gap-1.5 bg-slate-800/70 px-2.5 py-1.5 rounded-lg border border-slate-700">
+          <span class="text-slate-400">Sort by:</span>
+          <select id="filterSort" onchange="window.triggerRefilter()" class="bg-transparent text-slate-200 font-medium focus:outline-none cursor-pointer">
+            <option value="similarity" class="bg-slate-900">Semantic Similarity (%)</option>
+            <option value="citations" class="bg-slate-900">Citation Count</option>
+            <option value="year" class="bg-slate-900">Newest Publication</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- View Tabs -->
+      <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+        <button id="tabCards" onclick="window.switchView('cards')"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all bg-indigo-600 text-white shadow-sm">
+          <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+          <span>Cards View</span>
+        </button>
+        <button id="tabMatrix" onclick="window.switchView('matrix')"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-900">
+          <i data-lucide="table" class="w-3.5 h-3.5"></i>
+          <span>Chapter 2 Matrix</span>
+        </button>
+        <button id="tabBinder" onclick="window.switchView('binder')"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-900">
+          <i data-lucide="bookmark" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span>Saved Binder (<span id="viewBinderCount">0</span>)</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- STATUS & STATS BAR -->
+    <div id="resultsStatusBar" class="hidden items-center justify-between text-xs text-slate-400 px-1">
+      <div id="resultsCountText">Showing 0 matching papers</div>
+      <div id="resultsRelevanceSummary" class="text-indigo-400 font-medium"></div>
+    </div>
+
+    <!-- MAIN DISPLAY AREA -->
+    <div id="mainDisplayArea" class="space-y-4">
+      <!-- Loading Skeleton or Welcome Hero inserted dynamically -->
+    </div>
+
+  </main>
+
+  <!-- CITATION MODAL -->
+  <div id="citationModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-2xl w-full shadow-2xl p-6 space-y-5 toast-slide-in">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="quote" class="w-5 h-5 text-indigo-400"></i>
+          <h3 class="text-base font-bold text-white">Cite Research Paper</h3>
+        </div>
+        <button onclick="window.closeCiteModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-1">
+        <div id="modalPaperTitle" class="text-xs text-slate-400 line-clamp-1 font-medium"></div>
+        <!-- Citation Style Tabs -->
+        <div class="flex flex-wrap gap-1 pt-2">
+          <button onclick="window.switchModalCiteStyle('apa7')" id="citeTab_apa7" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 text-white">APA 7th</button>
+          <button onclick="window.switchModalCiteStyle('ieee')" id="citeTab_ieee" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">IEEE</button>
+          <button onclick="window.switchModalCiteStyle('mla9')" id="citeTab_mla9" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">MLA 9th</button>
+          <button onclick="window.switchModalCiteStyle('chicago')" id="citeTab_chicago" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Chicago</button>
+          <button onclick="window.switchModalCiteStyle('harvard')" id="citeTab_harvard" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Harvard</button>
+          <button onclick="window.switchModalCiteStyle('bibtex')" id="citeTab_bibtex" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">BibTeX</button>
+        </div>
+      </div>
+
+      <!-- Full Bibliography Box -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+          <span>Bibliography Reference:</span>
+          <button onclick="window.copyToClipboard('modalCiteContent')" class="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-semibold">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span>Copy Reference</span>
+          </button>
+        </div>
+        <div id="modalCiteContent" class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-serif-academic text-sm text-slate-200 leading-relaxed select-all">
+          Loading citation...
+        </div>
+      </div>
+
+      <!-- In-Text Citation Box -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+        <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+          <div class="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+            <span>Parenthetical In-Text:</span>
+            <button onclick="window.copyToClipboard('modalInTextParenthetical')" class="text-indigo-400 hover:text-indigo-300">
+              <i data-lucide="copy" class="w-3 h-3"></i>
+            </button>
+          </div>
+          <div id="modalInTextParenthetical" class="text-xs text-indigo-200 font-mono select-all">
+            (Author, Year)
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+          <div class="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+            <span>Narrative In-Text:</span>
+            <button onclick="window.copyToClipboard('modalInTextNarrative')" class="text-indigo-400 hover:text-indigo-300">
+              <i data-lucide="copy" class="w-3 h-3"></i>
+            </button>
+          </div>
+          <div id="modalInTextNarrative" class="text-xs text-indigo-200 font-mono select-all">
+            Author (Year)
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- App scripts -->
+  <script src="/js/binder.js"></script>
+  <script src="/js/exporter.js"></script>
+  <script src="/js/matrix_view.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
