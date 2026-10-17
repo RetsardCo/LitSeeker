@@ -2,55 +2,46 @@
   <img src="public/assets/logo.png" alt="LitFinder Logo" width="160">
 </p>
 
-# LitFinder • Academic Literature Discovery, Open-Access Finder & Synthesis Studio 🎓
+# LitFinder • Academic Literature Discovery, Open-Access Finder & Research Intelligence Studio 🎓
 
-LitFinder is an academic research platform designed for researchers, college students, and scholars preparing **Chapter 2: Review of Related Literature and Studies (RRL / RRS)** and seeking legitimate, free-to-read, open-access versions of academic papers.
+LitFinder is an academic research platform designed for researchers, college students, and scholars preparing **Chapter 2: Review of Related Literature and Studies (RRL / RRS)**, seeking legitimate, free-to-read, open-access versions of academic papers, and constructing evidence-grounded research methodology and sample-size justifications.
 
 ---
 
-## 🌟 Key Features
+## 🌟 Key Capabilities
 
-1. **Multi-Source Federated Academic Search**:
-   - Searches **OpenAlex** (250M+ scholarly works across all disciplines) and **arXiv** (computer science, AI, engineering, and mathematics preprints).
-   - Resolves verified **DOIs** (`https://doi.org/...`) and provides direct links to publisher versions.
-   - Detects **Open Access** availability with direct PDF download streaming.
+### 1. Automatic Legal Open-Access Paper Finder ("Find Free Version")
+- **Multi-Source Provider Architecture**: Integrates **OpenAlex**, **Unpaywall** API (`UNPAYWALL_EMAIL`), **arXiv**, and **Europe PMC** to discover authorized open-access versions of research papers.
+- **Exact-Paper Matching Pipeline**: Employs normalized DOI matching, arXiv identifier verification, title similarity, author overlap, and publication year compatibility to ensure candidates represent the exact scholarly work.
+- **Clear Access Classification**: Explicitly identifies whether a version is an **Open Access PDF**, **Free Full Text**, **Repository Copy** (institutional repository), **Preprint** (e.g. arXiv), **Free Publisher Version**, or **Landing Page Only**.
+- **Safe SSRF-Protected PDF Downloader**: Multi-layer security validation blocks localhost, private network addresses (RFC 1918), link-local (169.254), and cloud metadata endpoints while safely streaming verified open-access PDFs with sanitized filenames.
+- **Lawful Access Fallback Guidance**: When no legitimate free copy is found, provides actionable lawful guidance (publisher links, institutional library access, author manuscript requests, and interlibrary loan).
 
-2. **Semantic Similarity & Capstone Matcher**:
-   - Paste your full **Capstone Title** or **Problem Statement**.
-   - NLP term-frequency and n-gram analysis calculates percentage similarity (0–100%).
-   - Highlights shared technical variables (e.g. *YOLOv8*, *Raspberry Pi*, *CNN*, *IoT Telemetry*).
+### 2. Research Intelligence & Methodology Extraction Engine
+- **Study Overview**: Detailed bibliographic provenance, research objectives, research problem, hypotheses, and variables.
+- **Research Design Classification**: Categorizes empirical designs (Quantitative Experimental, Quasi-Experimental, Benchmarking & Performance Evaluation, System Development, Observational, Survey, Qualitative Case Study, etc.) with explicit confidence and evidence traceability.
+- **Population & Sampling Architecture**: Distinguishes independent sampling units (physical devices, hardware endpoints, human participants, benchmark datasets) from repeated measurements or observation cycles.
+- **Specialized Hardware & Technical Research Support**: Explicitly warns when small numbers of hardware endpoints (e.g. N = 2 devices) are subjected to repeated runs (e.g. 1,000,000 measurements), ensuring repeated observations are not conflated with statistical representation across an entire hardware population.
+- **Standards-Based Validation Protocol**: Inspects compliance with validation frameworks such as **NIST SP 800-90B** for entropy sources and random bit generation (restart testing, initial entropy estimation, min-entropy).
+- **Separation of Author Limitations vs. Analytical Validity Threats**: Separates limitations explicitly acknowledged by researchers from analytical validity threats (internal, external, construct, statistical conclusion validity).
 
-3. **Chapter 2 Literature Synthesis Matrix**:
-   - Dedicated table view with structured columns:
-     - **Author(s) & Year**
-     - **Study Title & DOI**
-     - **Category Tagging** (*Foreign Literature*, *Foreign Study*, *Local Literature*, *Local Study*)
-     - **Methodology & Tech Stack**
-     - **Key Findings & Performance Metrics**
-     - **Research Gap & Capstone Relevance**
+### 3. Dedicated Sample-Size Justification Assistant ("Find Comparable Sampling Studies")
+- **"My Research Profile"**: Configure your study parameters (research title, objectives, discipline, design, sampling unit, technique, independent sample size, repeated session counts, validation standards).
+- **Methodological Comparability Matching**: Compares retrieved papers against your profile and classifies them into:
+  - *Direct Methodological Match*
+  - *Strong Partial Match*
+  - *Contextual Supporting Study*
+  - *Weak Match*
+  - *Not Comparable*
+- **Structured Justification Report**: Generates a 10-point evidence-linked sample-size justification report for thesis defense, highlighting what the published evidence supports, critical limitations, and a defensible draft rationale.
 
-4. **Multi-Style Citation Suite**:
-   - Generates instant citations across 6 academic formats:
-     - **APA 7th Edition** (standard university capstone format)
-     - **IEEE** (numbered format for CS/IT/Engineering)
-     - **MLA 9th Edition**
-     - **Chicago 17th Edition** (Author-Date)
-     - **Harvard**
-     - **BibTeX** (`.bib` for Overleaf and LaTeX)
-   - Generates in-text parenthetical `(Santos & Del Rosario, 2023)` and narrative citations `Santos and Del Rosario (2023)`.
+### 4. Chapter 2 Synthesis Matrix & Custom Column Builder
+- Dedicated grid view mapping Authors, Year, Title, Category (*Foreign/Local Literature/Studies*), Methodology, Key Findings, Research Gaps, and custom methodology columns.
+- Real-time column visibility toggles, inline editing, and category classification.
 
-5. **Direct Open Access PDF Downloader**:
-   - Built-in server CORS streaming proxy (`/api/pdf/proxy`) downloads papers directly to your computer with clean filenames (`Author_Year_Title.pdf`), bypassing browser download blocks.
-
-6. **Literature Export Suite**:
-   - **Synthesis Matrix (CSV / Excel)**: Ready to import into thesis synthesis matrices.
-   - **BibTeX (.bib)**: Import directly into Zotero, Overleaf, or Mendeley.
-   - **RIS (.ris)**: Import into EndNote and RefWorks.
-   - **Chapter 2 Draft Document (.md)**: Pre-formatted review draft with sections (Synthesis of Reviewed Literature, Synthesis Matrix, and Complete References List).
-
-7. **"My RRL Binder"**:
-   - Pin candidate papers into your personal bibliography binder (persisted in browser storage).
-   - Batch-export only your curated papers.
+### 5. Multi-Style Citation Suite & Export Suite
+- **Citations**: Instant 1-click citation in **APA 7th Edition**, **IEEE**, **MLA 9th**, **Chicago 17th**, **Harvard**, and **BibTeX**, plus in-text parenthetical and narrative citations.
+- **Exports**: Download full CSV synthesis matrices, BibTeX (`.bib`), RIS (`.ris`), pre-formatted Chapter 2 Markdown drafts (`.md`), and sample-size justification reports.
 
 ---
 
@@ -59,7 +50,15 @@ LitFinder is an academic research platform designed for researchers, college stu
 ### 1. Requirements
 - Node.js (v18+)
 
-### 2. Run the Application
+### 2. Environment Configuration (Optional)
+Create an optional `.env` file in the project root:
+```env
+PORT=3005
+UNPAYWALL_EMAIL=your-email@university.edu
+```
+*(LitFinder works out of the box with polite default academic headers if no environment variable is provided).*
+
+### 3. Run the Application
 Open PowerShell or your command terminal in this directory:
 ```bash
 cmd /c npm start
@@ -67,11 +66,11 @@ cmd /c npm start
 The server will start at:
 👉 **`http://localhost:3005`**
 
-### 3. Run Automated Tests
+### 4. Run Automated Tests
 ```bash
 cmd /c npm test
 ```
-Runs 13 automated tests verifying citation generation, similarity scoring, matrix extraction, and API endpoints.
+Runs 36 automated unit and integration tests verifying Open-Access discovery, SSRF protection, research intelligence, methodology extraction, citation formats, and API endpoints.
 
 ---
 
@@ -80,26 +79,44 @@ Runs 13 automated tests verifying citation generation, similarity scoring, matri
 ```
 LitFinder/
 ├── lib/
-│   ├── openalex.js       # OpenAlex REST client & inverted index reconstructor
-│   ├── arxiv.js          # arXiv search client for STEM/CS papers
-│   ├── similarity.js     # TF-IDF & semantic keyword similarity scorer
-│   ├── citation.js       # APA 7, IEEE, MLA 9, Chicago, Harvard, BibTeX formatter
-│   ├── matrix.js         # Chapter 2 synthesis extractor (Methods, Findings, Gaps)
-│   └── pdf_resolver.js   # Direct OA PDF URL resolver & CORS streaming proxy
+│   ├── open_access_finder.js    # Multi-provider open-access discovery engine
+│   ├── unpaywall.js             # Unpaywall API adapter (DOI discovery)
+│   ├── openalex.js              # OpenAlex client & inverted index reconstructor
+│   ├── arxiv.js                 # arXiv client for preprints & STEM papers
+│   ├── europepmc.js             # Europe PMC repository adapter
+│   ├── paper_matcher.js         # Exact-paper matching & deduplication pipeline
+│   ├── research_intelligence.js # Methodology, sampling, and findings extraction engine
+│   ├── research_profile.js      # Research profile & sample-size justification assistant
+│   ├── similarity.js            # Semantic similarity & capstone matcher
+│   ├── citation.js              # APA 7, IEEE, MLA 9, Chicago, Harvard, BibTeX formatter
+│   ├── matrix.js                # Chapter 2 synthesis extractor
+│   └── pdf_resolver.js          # SSRF-protected OA PDF resolver & CORS proxy
 ├── public/
-│   ├── index.html        # Academic research UI (Tailwind CSS, Lucide Icons)
+│   ├── assets/
+│   │   └── logo.png             # Official LitFinder Logo
+│   ├── index.html               # Academic research UI (Tailwind CSS, Lucide Icons)
 │   ├── css/
-│   │   └── app.css       # Academic styling, badges, animations
+│   │   └── app.css              # Academic styling, badges, animations
 │   └── js/
-│       ├── app.js        # Client state management, search, filters
-│       ├── binder.js     # 'My RRL Binder' local storage & collections
-│       ├── matrix_view.js# Synthesis table renderer
-│       └── exporter.js   # CSV, BibTeX, RIS, Markdown exporter
+│       ├── app.js               # Client state, search, OA modal, research intelligence
+│       ├── binder.js            # 'My RRL Binder' local storage & collections
+│       ├── matrix_view.js       # Synthesis table renderer with custom columns
+│       └── exporter.js          # CSV, BibTeX, RIS, Markdown exporter
 ├── test/
-│   ├── citation.test.js  # Citation engine formatting tests
-│   ├── similarity.test.js# Scoring & keyword overlap tests
-│   ├── matrix.test.js    # Methodology & findings extraction tests
-│   └── server.test.js    # Express API integration tests
-├── server.js             # Express HTTP server & API endpoints
-└── package.json          # Project configuration & test scripts
+│   ├── citation.test.js         # Citation engine formatting tests
+│   ├── matrix.test.js           # Synthesis matrix extraction tests
+│   ├── open_access_finder.test.js # OA provider, SSRF security, and matcher tests
+│   ├── research_intelligence.test.js # Methodology, sampling, and justification tests
+│   ├── server.test.js           # Express API integration tests
+│   └── similarity.test.js       # Scoring & keyword overlap tests
+├── server.js                    # Express HTTP server & API endpoints
+├── run.bat                      # One-click Windows desktop launcher
+└── package.json                 # Project configuration & test scripts
 ```
+
+---
+
+## 🔒 Security & Academic Integrity
+
+- **Lawful Access Guarantee**: LitFinder only indexes and links legitimate Open Access sources (Unpaywall, OpenAlex, arXiv, publisher authorized open access). It never bypasses authentication, paywalls, or anti-bot protections, and does not implement unauthorized mirrors.
+- **SSRF Hardening**: All PDF streaming and URL verification requests are filtered against internal/private IP ranges (RFC 1918), link-local addresses, AWS/GCP metadata endpoints, and DNS rebinding attacks.

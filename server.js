@@ -6,7 +6,10 @@ const { searchArXiv } = require('./lib/arxiv');
 const { scorePaperSimilarity } = require('./lib/similarity');
 const { generateCitations, formatAPA7, formatIEEE, formatBibTeX } = require('./lib/citation');
 const { generateMatrixRow } = require('./lib/matrix');
-const { proxyPdfStream, sanitizeFilename } = require('./lib/pdf_resolver');
+const { proxyPdfStream, sanitizeFilename, verifyCandidateUrl } = require('./lib/pdf_resolver');
+const { findFreeVersions } = require('./lib/open_access_finder');
+const { analyzeResearchPaper } = require('./lib/research_intelligence');
+const { DEFAULT_SAMPLE_RESEARCH_PROFILE, compareStudyToProfile, generateSampleSizeJustificationReport } = require('./lib/research_profile');
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -187,6 +190,92 @@ app.get('/api/pdf/proxy', (req, res) => {
   }
 
   proxyPdfStream(targetUrl, res, filename);
+});
+
+// --- Open Access Paper Finder Endpoints ---
+app.get('/api/open-access/find', async (req, res) => {
+  const { doi, title, authors, year } = req.query;
+  const authorList = authors ? authors.split(',').map(a => a.trim()).filter(Boolean) : [];
+
+  if (!doi && !title) {
+    return res.status(400).json({ error: 'Either "doi" or "title" parameter is required.' });
+  }
+
+  try {
+    const target = {
+      doi: doi ? doi.trim() : null,
+      title: title ? title.trim() : '',
+      authors: authorList,
+      publicationYear: year ? parseInt(year, 10) : null
+    };
+
+    const result = await findFreeVersions(target, { verifyUrls: true });
+    res.json(result);
+  } catch (err) {
+    console.error(`[OA Finder Error]: ${err.message}`);
+    res.status(500).json({ error: 'Failed to search open access versions', details: err.message });
+  }
+});
+
+app.post('/api/open-access/verify', async (req, res) => {
+  const { url } = req.body;
+  if (!url) {
+    return res.status(400).json({ error: 'URL parameter is required.' });
+  }
+
+  try {
+    const verification = await verifyCandidateUrl(url, 4000);
+    res.json(verification);
+  } catch (err) {
+    res.status(500).json({ error: 'Verification failed', details: err.message });
+  }
+});
+
+// --- Research Intelligence & Methodology Endpoints ---
+app.get('/api/research/sample-profile', (req, res) => {
+  res.json({ profile: DEFAULT_SAMPLE_RESEARCH_PROFILE });
+});
+
+app.post('/api/research/analyze', (req, res) => {
+  const { paper, fullText = '' } = req.body;
+  if (!paper) {
+    return res.status(400).json({ error: 'Paper object is required.' });
+  }
+
+  try {
+    const analysis = analyzeResearchPaper(paper, fullText);
+    res.json({ analysis });
+  } catch (err) {
+    res.status(500).json({ error: 'Analysis failed', details: err.message });
+  }
+});
+
+app.post('/api/research/compare', (req, res) => {
+  const { profile = DEFAULT_SAMPLE_RESEARCH_PROFILE, paper, papers, fullText = '' } = req.body;
+  const list = papers || (paper ? [paper] : []);
+
+  if (list.length === 0) {
+    return res.status(400).json({ error: 'Paper or papers array is required.' });
+  }
+
+  try {
+    const comparisons = list.map(p => compareStudyToProfile(profile, p, fullText));
+    res.json({ comparisons });
+  } catch (err) {
+    res.status(500).json({ error: 'Comparison failed', details: err.message });
+  }
+});
+
+app.post('/api/research/justification-report', (req, res) => {
+  const { profile = DEFAULT_SAMPLE_RESEARCH_PROFILE, papers = [] } = req.body;
+
+  try {
+    const comparedStudies = papers.map(p => compareStudyToProfile(profile, p));
+    const report = generateSampleSizeJustificationReport(profile, comparedStudies);
+    res.json({ report });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to generate justification report', details: err.message });
+  }
 });
 
 // Catch-all for SPA
