@@ -193,9 +193,15 @@ app.get('/api/pdf/proxy', (req, res) => {
 });
 
 // --- Open Access Paper Finder Endpoints ---
-app.get('/api/open-access/find', async (req, res) => {
-  const { doi, title, authors, year } = req.query;
-  const authorList = authors ? authors.split(',').map(a => a.trim()).filter(Boolean) : [];
+const handleOpenAccessFind = async (req, res) => {
+  const paper = req.body?.paper || req.body || {};
+  const doi = req.query.doi || paper.doi;
+  const title = req.query.title || paper.title;
+  const year = req.query.year || paper.publicationYear || paper.year;
+  const authors = req.query.authors || paper.authors;
+  const authorList = Array.isArray(authors) 
+    ? authors 
+    : (typeof authors === 'string' ? authors.split(',').map(a => a.trim()).filter(Boolean) : []);
 
   if (!doi && !title) {
     return res.status(400).json({ error: 'Either "doi" or "title" parameter is required.' });
@@ -203,8 +209,8 @@ app.get('/api/open-access/find', async (req, res) => {
 
   try {
     const target = {
-      doi: doi ? doi.trim() : null,
-      title: title ? title.trim() : '',
+      doi: doi ? String(doi).trim() : null,
+      title: title ? String(title).trim() : '',
       authors: authorList,
       publicationYear: year ? parseInt(year, 10) : null
     };
@@ -215,7 +221,10 @@ app.get('/api/open-access/find', async (req, res) => {
     console.error(`[OA Finder Error]: ${err.message}`);
     res.status(500).json({ error: 'Failed to search open access versions', details: err.message });
   }
-});
+};
+
+app.get('/api/open-access/find', handleOpenAccessFind);
+app.post('/api/open-access/find', handleOpenAccessFind);
 
 app.post('/api/open-access/verify', async (req, res) => {
   const { url } = req.body;
