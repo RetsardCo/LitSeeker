@@ -324,12 +324,13 @@ function renderCardsView(container, papers, isBinderView = false) {
 
                 <!-- PDF Download Button or Publisher Link -->
                 ${p.isOpenAccess && p.openAccessUrl ? `
-                  <a href="/api/pdf/proxy?url=${encodeURIComponent(p.openAccessUrl)}&filename=${encodeURIComponent((p.authors?.[0] || 'Paper') + '_' + p.publicationYear + '.pdf')}"
-                    target="_blank" download
-                    class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all">
-                    <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
-                    <span>Download PDF</span>
-                  </a>
+                  <button type="button"
+                    onclick="window.downloadPaperPdf(event, '${p.id}', '${encodeURIComponent(p.openAccessUrl)}', '${encodeURIComponent((p.authors?.[0] || 'Paper') + '_' + p.publicationYear + '.pdf')}', '${p.doi ? encodeURIComponent(p.doi) : ''}', '${encodeURIComponent((p.title || '').replace(/'/g, ''))}')"
+                    class="px-3 py-1.5 rounded-lg ${p.hasDirectPdf !== false ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20' : 'bg-teal-700 hover:bg-teal-600 text-teal-100 shadow-teal-700/20'} text-xs font-semibold flex items-center gap-1.5 shadow-md transition-all"
+                    title="${p.hasDirectPdf !== false ? 'Download Verified Open-Access PDF' : 'Open / Resolve Open-Access Paper'}">
+                    <i data-lucide="${p.hasDirectPdf !== false ? 'file-down' : 'book-open'}" class="w-3.5 h-3.5"></i>
+                    <span>${p.hasDirectPdf !== false ? 'Download PDF' : 'Read Free Text'}</span>
+                  </button>
                 ` : `
                   <a href="${doi || 'https://scholar.google.com/scholar?q=' + encodeURIComponent(p.title)}" target="_blank" rel="noopener noreferrer"
                     class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 text-xs flex items-center gap-1.5 transition-colors"
@@ -787,12 +788,12 @@ function renderOaDiscoveryResults(container, data, targetPaper) {
                 </a>
 
                 ${isPdf && v.pdfUrl ? `
-                  <a href="/api/pdf/proxy?url=${encodeURIComponent(v.pdfUrl)}&filename=${encodeURIComponent(downloadFilename)}"
-                    target="_blank" download
+                  <button type="button"
+                    onclick="window.downloadPaperPdf(event, '${targetPaper.id}', '${encodeURIComponent(v.pdfUrl)}', '${encodeURIComponent(downloadFilename)}', '${targetPaper.doi ? encodeURIComponent(targetPaper.doi) : ''}', '${encodeURIComponent((targetPaper.title || '').replace(/'/g, ''))}')"
                     class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all">
                     <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
                     <span>Download PDF</span>
-                  </a>
+                  </button>
                 ` : ''}
               </div>
 
@@ -1573,3 +1574,157 @@ function renderJustificationReportContent(container, report) {
   container.innerHTML = html;
   lucide.createIcons();
 }
+
+// ==========================================
+// CLIENT-SIDE PDF DOWNLOAD & FALLBACK CONTROLLER
+// ==========================================
+window.downloadPaperPdf = async function(event, paperId, rawTargetUrl, rawFilename, rawDoi, rawTitle) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const targetUrl = decodeURIComponent(rawTargetUrl || '');
+  const customFilename = decodeURIComponent(rawFilename || 'academic_paper.pdf');
+  const doi = rawDoi ? decodeURIComponent(rawDoi) : '';
+  const title = rawTitle ? decodeURIComponent(rawTitle) : 'Research Paper';
+
+  const btn = event?.currentTarget;
+  const originalHtml = btn ? btn.innerHTML : '';
+  
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Resolving PDF...</span>`;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  try {
+    const proxyUrl = `/api/pdf/proxy?url=${encodeURIComponent(targetUrl)}&filename=${encodeURIComponent(customFilename)}`;
+    const response = await fetch(proxyUrl);
+    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+
+    // If upstream returned a verified PDF stream
+    if (response.ok && contentType.includes('application/pdf')) {
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = customFilename.endsWith('.pdf') ? customFilename : `${customFilename}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+      showToast(`Downloaded "${customFilename}"`, 'success');
+      return;
+    }
+
+    // Upstream returned an error or landing page
+    let errData = {};
+    try {
+      errData = await response.json();
+    } catch {
+      errData = { message: await response.text() };
+    }
+
+    const landingUrl = errData.landingUrl || targetUrl || doi;
+    window.showPdfFallbackModal({
+      title,
+      doi,
+      targetUrl: landingUrl,
+      reason: errData.message || 'Direct automated streaming is restricted by this repository or requires an interactive session.',
+      paperId
+    });
+
+  } catch (err) {
+    console.error('PDF Download Error:', err);
+    window.showPdfFallbackModal({
+      title,
+      doi,
+      targetUrl: targetUrl || doi,
+      reason: err.message,
+      paperId
+    });
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+};
+
+window.showPdfFallbackModal = function({ title, doi, targetUrl, reason, paperId }) {
+  let modal = document.getElementById('pdfFallbackModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'pdfFallbackModal';
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm';
+    document.body.appendChild(modal);
+  }
+
+  const cleanDoi = doi ? (doi.startsWith('http') ? doi : `https://doi.org/${doi}`) : '';
+  const openUrl = targetUrl || cleanDoi;
+
+  modal.innerHTML = `
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 toast-slide-in">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white leading-snug">Interactive Reader Required</h3>
+            <p class="text-[11px] text-slate-400">Upstream publisher restricted raw binary streaming</p>
+          </div>
+        </div>
+        <button onclick="window.closePdfFallbackModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 space-y-2">
+        <div class="font-semibold text-slate-200 line-clamp-2">${title}</div>
+        <p class="text-[11px] text-amber-300/90 leading-relaxed">
+          ${reason}
+        </p>
+        <p class="text-[11px] text-slate-400 leading-relaxed">
+          Major academic repositories (such as IEEE Xplore, ScienceDirect, or Springer) protect full-text downloads with interactive sessions, CAPTCHA, or custom browser readers. You can read the paper directly on the publisher portal or check for open repository preprints.
+        </p>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-800">
+        ${openUrl ? `
+          <a href="${openUrl}" target="_blank" rel="noopener noreferrer"
+            class="flex-1 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/30 transition-all">
+            <i data-lucide="external-link" class="w-4 h-4"></i>
+            <span>Open Paper on Publisher Portal</span>
+          </a>
+        ` : ''}
+
+        ${paperId ? `
+          <button onclick="window.closePdfFallbackModal(); window.openOaModal('${paperId}')"
+            class="px-4 py-2.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/70 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="unlock" class="w-4 h-4"></i>
+            <span>Find Free Alternative Copy</span>
+          </button>
+        ` : ''}
+      </div>
+
+      <div class="text-center pt-1">
+        <button onclick="window.closePdfFallbackModal()" class="text-[11px] text-slate-500 hover:text-slate-300">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+  if (window.lucide) lucide.createIcons();
+};
+
+window.closePdfFallbackModal = function() {
+  const modal = document.getElementById('pdfFallbackModal');
+  if (modal) modal.classList.add('hidden');
+};
+

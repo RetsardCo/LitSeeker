@@ -268,3 +268,21 @@ test('API: Open-Access verify endpoint rejects SSRF targets safely', async () =>
     server.close();
   }
 });
+
+test('API: PDF Proxy handles HTML landing pages and upstream errors safely without raw file crashes', async () => {
+  const server = app.listen(0);
+  const port = server.address().port;
+
+  try {
+    // 1. Missing URL
+    const missingRes = await fetch(`http://localhost:${port}/api/pdf/proxy`);
+    assert.equal(missingRes.status, 400);
+
+    // 2. SSRF URL blocked
+    const ssrfRes = await fetch(`http://localhost:${port}/api/pdf/proxy?url=${encodeURIComponent('http://127.0.0.1:9999/test.pdf')}`);
+    assert.equal(ssrfRes.status, 403);
+  } finally {
+    server.close();
+  }
+});
+

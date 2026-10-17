@@ -203,12 +203,12 @@ function renderMatrixTable(container, papers, options = {}) {
 
                       <!-- PDF Download or External Link -->
                       ${p.isOpenAccess && p.openAccessUrl ? `
-                        <a href="/api/pdf/proxy?url=${encodeURIComponent(p.openAccessUrl)}&filename=${encodeURIComponent((p.authors?.[0] || 'Paper') + '_' + p.publicationYear + '.pdf')}"
-                          target="_blank" download
+                        <button type="button"
+                          onclick="window.downloadPaperPdf(event, '${p.id}', '${encodeURIComponent(p.openAccessUrl)}', '${encodeURIComponent((p.authors?.[0] || 'Paper') + '_' + p.publicationYear + '.pdf')}', '${p.doi ? encodeURIComponent(p.doi) : ''}', '${encodeURIComponent((p.title || '').replace(/'/g, ''))}')"
                           class="p-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700 text-emerald-400 transition-all"
                           title="Download Open Access PDF">
                           <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
-                        </a>
+                        </button>
                       ` : `
                         <button onclick="window.openOaModal('${p.id}')"
                           class="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-amber-400 transition-all"
