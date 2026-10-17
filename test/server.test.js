@@ -36,6 +36,43 @@ test('API: Search endpoint handles query and returns scored papers', async () =>
   }
 });
 
+test('API: Search endpoint respects custom display limit parameter', async () => {
+  const server = app.listen(0);
+  const port = server.address().port;
+
+  try {
+    const res = await fetch(`http://localhost:${port}/api/search?q=machine+learning&limit=2`);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.ok(Array.isArray(body.papers));
+    assert.ok(body.papers.length <= 2);
+    assert.ok(body.papers.length > 0);
+  } finally {
+    server.close();
+  }
+});
+
+test('API: Search endpoint clamps limit boundaries safely and handles source=arxiv limit', async () => {
+  const server = app.listen(0);
+  const port = server.address().port;
+
+  try {
+    // When limit is 0 or invalid, defaults to 20
+    const resDef = await fetch(`http://localhost:${port}/api/search?q=machine+learning&limit=0`);
+    assert.equal(resDef.status, 200);
+    const bodyDef = await resDef.json();
+    assert.ok(bodyDef.papers.length <= 20);
+
+    // When source is arxiv, honors requested limit
+    const resArxiv = await fetch(`http://localhost:${port}/api/search?q=neural+networks&source=arxiv&limit=3`);
+    assert.equal(resArxiv.status, 200);
+    const bodyArxiv = await resArxiv.json();
+    assert.ok(bodyArxiv.papers.length <= 3);
+  } finally {
+    server.close();
+  }
+});
+
 test('API: Citation generator formats paper in requested style', async () => {
   const server = app.listen(0);
   const port = server.address().port;

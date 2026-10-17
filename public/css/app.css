@@ -93,3 +93,36 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Abstract Expand / Collapse Styling */
+.abstract-container {
+  position: relative;
+}
+
+.abstract-text {
+  word-break: break-word;
+}
+
+.abstract-text.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.abstract-text.line-clamp-none {
+  display: block;
+  -webkit-line-clamp: none;
+  -webkit-box-orient: horizontal;
+  overflow: visible;
+}
+
+.abstract-toggle-btn {
+  user-select: none;
+  cursor: pointer;
+}
+
+.abstract-toggle-btn:active {
+  transform: scale(0.98);
+}
+

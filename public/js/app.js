@@ -3,6 +3,7 @@
  */
 
 let currentPapers = [];
+window.currentPapers = currentPapers;
 let currentCapstoneTitle = '';
 let currentView = 'cards'; // 'cards' | 'matrix' | 'binder'
 let activeCitationStyle = 'apa7';
@@ -82,10 +83,17 @@ async function performSearch() {
 
   renderLoadingSkeleton();
 
+  const queryInput = document.getElementById('searchQueryInput');
+  if (queryInput && queryInput.value.trim()) {
+    currentCapstoneTitle = queryInput.value.trim();
+  }
+
   const filterRecent = document.getElementById('filterRecentYears').checked;
   const filterOA = document.getElementById('filterOpenAccessOnly').checked;
   const source = document.getElementById('filterSource').value;
   const sort = document.getElementById('filterSort').value;
+  const limitEl = document.getElementById('filterLimit') || document.getElementById('statusBarLimit');
+  const limit = limitEl ? limitEl.value : '20';
 
   const currentYear = new Date().getFullYear();
   const minYear = filterRecent ? (currentYear - 5) : '';
@@ -93,7 +101,7 @@ async function performSearch() {
   const params = new URLSearchParams({
     q: currentCapstoneTitle,
     capstone_title: currentCapstoneTitle,
-    limit: '20',
+    limit,
     source,
     sort,
     is_oa: filterOA ? 'true' : 'false'
@@ -106,6 +114,7 @@ async function performSearch() {
 
     const data = await response.json();
     currentPapers = data.papers || [];
+    window.currentPapers = currentPapers;
 
     updateResultsStatusBar(currentPapers.length);
     renderCurrentView();
@@ -123,10 +132,38 @@ async function performSearch() {
 }
 
 window.triggerRefilter = function() {
+  const queryInput = document.getElementById('searchQueryInput');
+  const query = queryInput ? queryInput.value.trim() : '';
+  if (query) currentCapstoneTitle = query;
+
+  if (currentView === 'binder') {
+    window.switchView('cards');
+  }
+
   if (currentPapers.length > 0 || currentCapstoneTitle) {
     performSearch();
   }
 };
+
+window.syncAndTriggerLimit = function(val) {
+  const f1 = document.getElementById('filterLimit');
+  const f2 = document.getElementById('statusBarLimit');
+  if (f1 && f1.value !== val) f1.value = val;
+  if (f2 && f2.value !== val) f2.value = val;
+
+  const queryInput = document.getElementById('searchQueryInput');
+  const query = queryInput ? queryInput.value.trim() : '';
+  if (query) currentCapstoneTitle = query;
+
+  if (currentView === 'binder') {
+    window.switchView('cards');
+  }
+
+  if (currentPapers.length > 0 || currentCapstoneTitle) {
+    performSearch();
+  }
+};
+window.triggerLimitChange = window.syncAndTriggerLimit;
 
 /**
  * View Switcher: Cards vs Matrix vs Binder
@@ -200,6 +237,8 @@ function renderCardsView(container, papers, isBinderView = false) {
         const matrix = p.matrix || {};
         const doi = p.doi ? (p.doi.startsWith('http') ? p.doi : `https://doi.org/${p.doi}`) : null;
         const currentCat = p.rrlCategory || matrix.category || 'Foreign Study';
+        const abstractText = (p.abstract || '').trim() || 'No abstract preview available for this publication.';
+        const isLongAbstract = abstractText.length > 180 || abstractText.includes('\n');
 
         return `
           <article class="glass-panel glass-panel-hover rounded-xl p-5 border border-slate-800/80 transition-all space-y-3.5 relative" id="card-${p.id}">
@@ -257,10 +296,23 @@ function renderCardsView(container, papers, isBinderView = false) {
             </div>
 
             <!-- Abstract Paragraph -->
-            <div class="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans line-clamp-3 hover:line-clamp-none transition-all cursor-pointer bg-slate-950/40 p-3 rounded-lg border border-slate-900"
-              title="Click to expand/collapse abstract">
-              <span class="font-semibold text-slate-400">Abstract: </span>
-              ${p.abstract}
+            <div class="abstract-container text-xs sm:text-sm text-slate-300 leading-relaxed font-sans bg-slate-950/40 p-3.5 rounded-lg border border-slate-900">
+              <p id="abstract-text-${idx}" class="abstract-text ${isLongAbstract ? 'line-clamp-3' : ''}">
+                <span class="font-semibold text-slate-400">Abstract: </span>${abstractText}
+              </p>
+              ${isLongAbstract ? `
+                <div class="pt-2">
+                  <button type="button"
+                    id="abstract-btn-${idx}"
+                    onclick="window.toggleAbstract(this, '${idx}')"
+                    aria-expanded="false"
+                    title="Expand full abstract"
+                    class="abstract-toggle-btn cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold text-indigo-400 hover:text-indigo-200 bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-800/50 shadow-sm transition-all focus:outline-none">
+                    <span class="abstract-btn-text" id="abstract-btn-text-${idx}">See more</span>
+                    <i id="abstract-btn-icon-${idx}" data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              ` : ''}
             </div>
 
             <!-- Methodology & Key Findings Highlights -->
@@ -519,6 +571,57 @@ window.toggleBinderDrawer = function() {
 };
 
 /**
+ * Abstract expand/collapse toggle handler
+ */
+window.toggleAbstract = function(target, idx) {
+  let btn, textEl;
+  if (target && target.nodeType) {
+    btn = target.closest ? (target.closest('.abstract-toggle-btn') || target) : target;
+    const container = btn.closest ? btn.closest('.abstract-container') : null;
+    if (container) {
+      textEl = container.querySelector('.abstract-text');
+    }
+  }
+  if (!textEl && (typeof target === 'string' || typeof target === 'number')) {
+    textEl = document.getElementById(`abstract-text-${target}`);
+    btn = document.getElementById(`abstract-btn-${target}`);
+    idx = target;
+  }
+  if (!textEl && idx !== undefined) {
+    textEl = document.getElementById(`abstract-text-${idx}`);
+  }
+  if (!btn && idx !== undefined) {
+    btn = document.getElementById(`abstract-btn-${idx}`);
+  }
+  if (!textEl || !btn) return;
+
+  const isExpanded = textEl.classList.contains('line-clamp-none') || !textEl.classList.contains('line-clamp-3');
+  const safeIdx = idx !== undefined ? idx : '';
+
+  if (isExpanded) {
+    textEl.classList.remove('line-clamp-none');
+    textEl.classList.add('line-clamp-3');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('title', 'Expand full abstract');
+    btn.innerHTML = `<span class="abstract-btn-text" id="abstract-btn-text-${safeIdx}">See more</span><i id="abstract-btn-icon-${safeIdx}" data-lucide="chevron-down" class="w-3.5 h-3.5"></i>`;
+  } else {
+    textEl.classList.remove('line-clamp-3');
+    textEl.classList.add('line-clamp-none');
+    btn.setAttribute('aria-expanded', 'true');
+    btn.setAttribute('title', 'Collapse abstract');
+    btn.innerHTML = `<span class="abstract-btn-text" id="abstract-btn-text-${safeIdx}">Show less</span><i id="abstract-btn-icon-${safeIdx}" data-lucide="chevron-up" class="w-3.5 h-3.5"></i>`;
+  }
+
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    try {
+      window.lucide.createIcons({ root: btn });
+    } catch {
+      window.lucide.createIcons();
+    }
+  }
+};
+
+/**
  * Status bar helper
  */
 function updateResultsStatusBar(count) {
@@ -526,7 +629,10 @@ function updateResultsStatusBar(count) {
   const countText = document.getElementById('resultsCountText');
   const summaryText = document.getElementById('resultsRelevanceSummary');
 
-  if (bar) bar.classList.remove('hidden');
+  if (bar) {
+    bar.classList.remove('hidden');
+    bar.classList.add('flex');
+  }
   if (countText) countText.textContent = `Displaying ${count} scholarly studies`;
   if (summaryText) summaryText.textContent = `Ranked by similarity to capstone title`;
 }
@@ -591,6 +697,11 @@ function renderWelcomeHero() {
 }
 
 function renderErrorState(message) {
+  const bar = document.getElementById('resultsStatusBar');
+  if (bar) {
+    bar.classList.add('hidden');
+    bar.classList.remove('flex');
+  }
   const container = document.getElementById('mainDisplayArea');
   container.innerHTML = `
     <div class="p-6 rounded-xl bg-red-950/40 border border-red-800 text-red-200 text-xs space-y-2 text-center">

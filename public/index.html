@@ -236,6 +236,19 @@
             <option value="year" class="bg-slate-900">Newest Publication</option>
           </select>
         </div>
+
+        <!-- Display Count / Papers Limit Dropdown -->
+        <div class="flex items-center gap-1.5 bg-slate-800/70 px-2.5 py-1.5 rounded-lg border border-slate-700">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span class="text-slate-400">Display:</span>
+          <select id="filterLimit" onchange="window.syncAndTriggerLimit(this.value)" class="bg-transparent text-slate-200 font-medium focus:outline-none cursor-pointer">
+            <option value="10" class="bg-slate-900">10 papers</option>
+            <option value="20" class="bg-slate-900" selected>20 papers</option>
+            <option value="30" class="bg-slate-900">30 papers</option>
+            <option value="50" class="bg-slate-900">50 papers</option>
+            <option value="100" class="bg-slate-900">100 papers</option>
+          </select>
+        </div>
       </div>
 
       <!-- View Tabs -->
@@ -266,8 +279,22 @@
     </section>
 
     <!-- STATUS & STATS BAR -->
-    <div id="resultsStatusBar" class="hidden items-center justify-between text-xs text-slate-400 px-1">
-      <div id="resultsCountText">Showing 0 matching papers</div>
+    <div id="resultsStatusBar" class="hidden flex-wrap items-center justify-between gap-3 text-xs text-slate-400 px-1">
+      <div class="flex items-center gap-2">
+        <span id="resultsCountText" class="font-medium text-slate-300">Displaying 0 scholarly studies</span>
+        <span class="text-slate-600">•</span>
+        <label class="flex items-center gap-1.5 text-slate-400">
+          <span>Show:</span>
+          <select id="statusBarLimit" onchange="window.syncAndTriggerLimit(this.value)" class="bg-slate-800 text-slate-200 text-xs rounded px-2 py-0.5 border border-slate-700 focus:outline-none cursor-pointer">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <span>per page</span>
+        </label>
+      </div>
       <div id="resultsRelevanceSummary" class="text-indigo-400 font-medium"></div>
     </div>
 

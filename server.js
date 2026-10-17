@@ -65,7 +65,7 @@ app.get('/api/sample-capstones', (req, res) => {
 app.get('/api/search', async (req, res) => {
   const query = (req.query.q || '').trim();
   const capstoneTitle = (req.query.capstone_title || query).trim();
-  const limit = Math.min(50, parseInt(req.query.limit, 10) || 15);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
   const minYear = req.query.min_year ? parseInt(req.query.min_year, 10) : null;
   const isOA = req.query.is_oa === 'true';
   const source = req.query.source || 'all'; // 'all', 'openalex', 'arxiv'
@@ -85,7 +85,8 @@ app.get('/api/search', async (req, res) => {
 
     // arXiv query
     if (source === 'all' || source === 'arxiv') {
-      fetchPromises.push(searchArXiv(query, Math.ceil(limit / 2)));
+      const arxivLimit = source === 'arxiv' ? limit : Math.ceil(limit / 2);
+      fetchPromises.push(searchArXiv(query, arxivLimit));
     }
 
     const results = await Promise.all(fetchPromises);
