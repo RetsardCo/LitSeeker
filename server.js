@@ -20,7 +20,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     version: '1.0.0',
-    system: 'Capstone Literature Finder & RRL Studio',
+    system: 'LitFinder — Academic Literature Discovery & Synthesis Studio',
     timestamp: new Date().toISOString()
   });
 });
@@ -197,7 +197,7 @@ app.get('*', (req, res) => {
 // Start Server only when executed directly
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`[Capstone LitFinder] Server online at http://localhost:${PORT}`);
+    console.log(`[LitFinder] Server online at http://localhost:${PORT}`);
   });
 }
 

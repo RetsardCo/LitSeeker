@@ -1,6 +1,10 @@
-# LitFinder • Capstone Chapter 2 Literature & Synthesis Studio 🎓
+<p align="center">
+  <img src="public/assets/logo.png" alt="LitFinder Logo" width="160">
+</p>
 
-An academic research web application designed specifically for college students and researchers preparing **Chapter 2: Review of Related Literature and Studies (RRL / RRS)** for capstone projects and theses.
+# LitFinder • Academic Literature Discovery, Open-Access Finder & Synthesis Studio 🎓
+
+LitFinder is an academic research platform designed for researchers, college students, and scholars preparing **Chapter 2: Review of Related Literature and Studies (RRL / RRS)** and seeking legitimate, free-to-read, open-access versions of academic papers.
 
 ---
 
@@ -74,7 +78,7 @@ Runs 13 automated tests verifying citation generation, similarity scoring, matri
 ## 📁 Project Structure
 
 ```
-capstone-lit-finder/
+LitFinder/
 ├── lib/
 │   ├── openalex.js       # OpenAlex REST client & inverted index reconstructor
 │   ├── arxiv.js          # arXiv search client for STEM/CS papers

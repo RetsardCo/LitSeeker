@@ -1,7 +1,7 @@
 {
-  "name": "capstone-lit-finder",
+  "name": "litfinder",
   "version": "1.0.0",
-  "description": "Academic Literature Review Discovery & Synthesis Studio for Capstone Theses",
+  "description": "LitFinder — Automatic Legal Open-Access Paper Finder & Chapter 2 Synthesis Matrix Studio",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -11,7 +11,7 @@ test('API: Health endpoint returns status online', async () => {
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.status, 'online');
-    assert.equal(body.system, 'Capstone Literature Finder & RRL Studio');
+    assert.equal(body.system, 'LitFinder — Academic Literature Discovery & Synthesis Studio');
   } finally {
     server.close();
   }
