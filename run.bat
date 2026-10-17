@@ -1,8 +1,8 @@
 @echo off
-title LitFinder - Capstone Literature Review Studio
+title LitSeeker - Capstone Literature Review Studio
 cd /d "%~dp0"
 echo ========================================================
-echo   LitFinder - Capstone Chapter 2 Literature Studio
+echo   LitSeeker - Capstone Chapter 2 Literature Studio
 echo ========================================================
 echo.
 echo Starting server on http://localhost:3005 ...

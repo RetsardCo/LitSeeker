@@ -1,5 +1,5 @@
 /**
- * Main Frontend Application Logic for LitFinder Capstone Studio
+ * Main Frontend Application Logic for LitSeeker Capstone Studio
  */
 
 let currentPapers = [];
@@ -1089,7 +1089,7 @@ window.switchRiTab = function(tabName) {
         <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
           <div class="text-[11px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
             <i data-lucide="microscope" class="w-4 h-4"></i>
-            <span>LitFinder Analytical Threats to Validity (Observation)</span>
+            <span>LitSeeker Analytical Threats to Validity (Observation)</span>
           </div>
           <div class="space-y-2 pt-1">
             ${lim.analyticalThreats.map(at => `
@@ -1187,7 +1187,7 @@ window.switchRiTab = function(tabName) {
             </div>
           </div>
           <div class="pt-2 border-t border-slate-900 text-[11px] text-slate-500">
-            Rule verification: LitFinder does NOT manufacture page numbers, tables, or unstated sample sizes when analyzing abstract records.
+            Rule verification: LitSeeker does NOT manufacture page numbers, tables, or unstated sample sizes when analyzing abstract records.
           </div>
         </div>
       </div>
@@ -1200,11 +1200,11 @@ window.switchRiTab = function(tabName) {
 // ==========================================
 // RESEARCH PROFILE CONTROLLER
 // ==========================================
-const PROFILE_STORAGE_KEY = 'litfinder_research_profile_v1';
+const PROFILE_STORAGE_KEY = 'litseeker_research_profile_v1';
 
 function getStoredResearchProfile() {
   try {
-    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY) || localStorage.getItem('litfinder_research_profile_v1');
     if (raw) return JSON.parse(raw);
   } catch {}
   return {

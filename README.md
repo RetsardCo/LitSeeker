@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="public/assets/logo.png" alt="LitFinder Logo" width="160">
+  <img src="public/assets/logo.png" alt="LitSeeker Logo" width="300">
 </p>
 
-# LitFinder • Academic Literature Discovery, Open-Access Finder & Research Intelligence Studio 🎓
+# LitSeeker • Academic Literature Discovery, Open-Access Finder & Research Intelligence Studio 🎓
 
-LitFinder is an academic research platform designed for researchers, college students, and scholars preparing **Chapter 2: Review of Related Literature and Studies (RRL / RRS)**, seeking legitimate, free-to-read, open-access versions of academic papers, and constructing evidence-grounded research methodology and sample-size justifications.
+LitSeeker is an academic research platform designed for researchers, college students, and scholars preparing **Chapter 2: Review of Related Literature and Studies (RRL / RRS)**, seeking legitimate, free-to-read, open-access versions of academic papers, and constructing evidence-grounded research methodology and sample-size justifications.
 
 ---
 
@@ -56,7 +56,7 @@ Create an optional `.env` file in the project root:
 PORT=3005
 UNPAYWALL_EMAIL=your-email@university.edu
 ```
-*(LitFinder works out of the box with polite default academic headers if no environment variable is provided).*
+*(LitSeeker works out of the box with polite default academic headers if no environment variable is provided).*
 
 ### 3. Run the Application
 Open PowerShell or your command terminal in this directory:
@@ -70,14 +70,14 @@ The server will start at:
 ```bash
 cmd /c npm test
 ```
-Runs 36 automated unit and integration tests verifying Open-Access discovery, SSRF protection, research intelligence, methodology extraction, citation formats, and API endpoints.
+Runs 37 automated unit and integration tests verifying Open-Access discovery, SSRF protection, research intelligence, methodology extraction, citation formats, and API endpoints.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-LitFinder/
+LitSeeker/
 ├── lib/
 │   ├── open_access_finder.js    # Multi-provider open-access discovery engine
 │   ├── unpaywall.js             # Unpaywall API adapter (DOI discovery)
@@ -93,7 +93,7 @@ LitFinder/
 │   └── pdf_resolver.js          # SSRF-protected OA PDF resolver & CORS proxy
 ├── public/
 │   ├── assets/
-│   │   └── logo.png             # Official LitFinder Logo
+│   │   └── logo.png             # Official LitSeeker Logo
 │   ├── index.html               # Academic research UI (Tailwind CSS, Lucide Icons)
 │   ├── css/
 │   │   └── app.css              # Academic styling, badges, animations
@@ -118,5 +118,5 @@ LitFinder/
 
 ## 🔒 Security & Academic Integrity
 
-- **Lawful Access Guarantee**: LitFinder only indexes and links legitimate Open Access sources (Unpaywall, OpenAlex, arXiv, publisher authorized open access). It never bypasses authentication, paywalls, or anti-bot protections, and does not implement unauthorized mirrors.
+- **Lawful Access Guarantee**: LitSeeker only indexes and links legitimate Open Access sources (Unpaywall, OpenAlex, arXiv, publisher authorized open access). It never bypasses authentication, paywalls, or anti-bot protections, and does not implement unauthorized mirrors.
 - **SSRF Hardening**: All PDF streaming and URL verification requests are filtered against internal/private IP ranges (RFC 1918), link-local addresses, AWS/GCP metadata endpoints, and DNS rebinding attacks.

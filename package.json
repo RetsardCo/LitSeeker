@@ -1,7 +1,7 @@
 {
-  "name": "litfinder",
+  "name": "litseeker",
   "version": "1.0.0",
-  "description": "LitFinder — Automatic Legal Open-Access Paper Finder & Chapter 2 Synthesis Matrix Studio",
+  "description": "LitSeeker — Automatic Legal Open-Access Paper Finder & Chapter 2 Synthesis Matrix Studio",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

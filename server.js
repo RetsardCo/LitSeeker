@@ -23,7 +23,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     version: '1.0.0',
-    system: 'LitFinder — Academic Literature Discovery & Synthesis Studio',
+    system: 'LitSeeker — Academic Literature Discovery & Synthesis Studio',
     timestamp: new Date().toISOString()
   });
 });
@@ -295,7 +295,7 @@ app.get('*', (req, res) => {
 // Start Server only when executed directly
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`[LitFinder] Server online at http://localhost:${PORT}`);
+    console.log(`[LitSeeker] Server online at http://localhost:${PORT}`);
   });
 }
 
