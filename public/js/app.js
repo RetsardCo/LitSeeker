@@ -672,11 +672,49 @@ window.openOaModal = async function(paperId) {
     renderOaDiscoveryResults(contentArea, data, paper);
   } catch (err) {
     console.error('OA Discovery Error:', err);
+    const isNetworkError = err.name === 'TypeError' && err.message.toLowerCase().includes('fetch');
+    const combined = (paper.doi || '') + ' ' + (paper.openAccessUrl || '');
+    const ieeeArnumMatch = combined.match(/[?&]arnumber=(\d+)/i) ||
+                           combined.match(/ieeexplore\.ieee\.org\/document\/(\d+)/i) ||
+                           combined.match(/ieeexplore\.ieee\.org\/ielx\d+\/\d+\/\d+\/(\d+)\.pdf/i) ||
+                           combined.match(/ieeexplore\.ieee\.org\/stamp\/stamp\.jsp.*?arnumber=(\d+)/i);
+    const ieeeArnum = ieeeArnumMatch ? ieeeArnumMatch[1] : null;
+    const readerUrl = ieeeArnum ? `https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=${ieeeArnum}` : null;
+    const doiUrl = paper.doi ? (paper.doi.startsWith('http') ? paper.doi : `https://doi.org/${paper.doi}`) : (ieeeArnum ? `https://ieeexplore.ieee.org/document/${ieeeArnum}` : null);
+    
+    let userReason = err.message;
+    if (isNetworkError) {
+      userReason = ieeeArnum
+        ? 'Could not connect through local backend proxy. However, you can open and read this paper directly in the publisher reader below.'
+        : 'Unable to connect to the LitSeeker local server. The server may be restarting or offline. Please verify that "npm start" is running on http://localhost:3005.';
+    }
+
     contentArea.innerHTML = `
-      <div class="p-5 rounded-xl bg-red-950/40 border border-red-800 text-red-300 text-xs text-center space-y-2">
+      <div class="p-5 rounded-xl bg-red-950/40 border border-red-800 text-red-300 text-xs text-center space-y-3">
         <i data-lucide="alert-triangle" class="w-6 h-6 mx-auto text-red-400"></i>
-        <div class="font-bold">Failed to complete open-access discovery</div>
-        <div>${err.message}</div>
+        <div class="font-bold text-sm">Open-Access Discovery Notice</div>
+        <p class="text-slate-300 text-xs leading-relaxed">${userReason}</p>
+        <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+          ${readerUrl ? `
+            <a href="${readerUrl}" target="_blank" rel="noopener noreferrer"
+              class="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-1.5 transition-all text-xs shadow-md shadow-indigo-600/30">
+              <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+              <span>Open PDF in Publisher Reader</span>
+            </a>
+          ` : ''}
+          ${doiUrl ? `
+            <a href="${doiUrl}" target="_blank" rel="noopener noreferrer"
+              class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold flex items-center gap-1.5 transition-all text-xs">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>Open Publisher Page Directly</span>
+            </a>
+          ` : ''}
+          <button onclick="window.openOaModal('${paper.id}')"
+            class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold flex items-center gap-1.5 transition-all text-xs">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Retry Discovery</span>
+          </button>
+        </div>
       </div>
     `;
     lucide.createIcons();
@@ -781,7 +819,15 @@ function renderOaDiscoveryResults(container, data, targetPaper) {
               </div>
 
               <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-900">
-                <a href="${v.url || v.landingPageUrl || v.pdfUrl}" target="_blank" rel="noopener noreferrer"
+                ${v.readerUrl ? `
+                  <a href="${v.readerUrl}" target="_blank" rel="noopener noreferrer"
+                    class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+                    <span>Open Reader</span>
+                  </a>
+                ` : ''}
+
+                <a href="${v.landingPageUrl || v.url || v.pdfUrl}" target="_blank" rel="noopener noreferrer"
                   class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition-colors">
                   <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                   <span>Open Source Page</span>
@@ -1578,6 +1624,16 @@ function renderJustificationReportContent(container, report) {
 // ==========================================
 // CLIENT-SIDE PDF DOWNLOAD & FALLBACK CONTROLLER
 // ==========================================
+function extractClientIeeeArnumber(url, doi) {
+  const combined = (url || '') + ' ' + (doi || '');
+  const m = combined.match(/[?&]arnumber=(\d+)/i) ||
+            combined.match(/ieeexplore\.ieee\.org\/document\/(\d+)/i) ||
+            combined.match(/ieeexplore\.ieee\.org\/ielx\d+\/\d+\/\d+\/(\d+)\.pdf/i) ||
+            combined.match(/ieeexplore\.ieee\.org\/stamp\/stamp\.jsp.*?arnumber=(\d+)/i) ||
+            combined.match(/ieeexplore\.ieee\.org\/.*?(\d{7,10})/i);
+  return m ? m[1] : null;
+}
+
 window.downloadPaperPdf = async function(event, paperId, rawTargetUrl, rawFilename, rawDoi, rawTitle) {
   if (event) {
     event.preventDefault();
@@ -1599,7 +1655,7 @@ window.downloadPaperPdf = async function(event, paperId, rawTargetUrl, rawFilena
   }
 
   try {
-    const proxyUrl = `/api/pdf/proxy?url=${encodeURIComponent(targetUrl)}&filename=${encodeURIComponent(customFilename)}`;
+    const proxyUrl = `/api/pdf/proxy?url=${encodeURIComponent(targetUrl)}&doi=${encodeURIComponent(doi)}&filename=${encodeURIComponent(customFilename)}`;
     const response = await fetch(proxyUrl);
     const contentType = (response.headers.get('content-type') || '').toLowerCase();
 
@@ -1627,23 +1683,47 @@ window.downloadPaperPdf = async function(event, paperId, rawTargetUrl, rawFilena
       errData = { message: await response.text() };
     }
 
-    const landingUrl = errData.landingUrl || targetUrl || doi;
+    const ieeeArnum = extractClientIeeeArnumber(targetUrl, doi);
+    const fallbackReaderUrl = ieeeArnum ? `https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=${ieeeArnum}` : null;
+    const directReaderUrl = errData.directReaderUrl || fallbackReaderUrl;
+    const isReaderRequired = Boolean(directReaderUrl || errData.requiresInteractiveSession || errData.error === 'publisher_reader_required' || ieeeArnum);
+    const landingUrl = directReaderUrl || errData.landingUrl || (ieeeArnum ? `https://ieeexplore.ieee.org/document/${ieeeArnum}` : (targetUrl || doi));
+
     window.showPdfFallbackModal({
       title,
       doi,
       targetUrl: landingUrl,
-      reason: errData.message || 'Direct automated streaming is restricted by this repository or requires an interactive session.',
-      paperId
+      directReaderUrl,
+      reason: errData.message || (isReaderRequired
+        ? 'This publisher delivers full text via its interactive browser reader.'
+        : 'Direct automated streaming is restricted by this repository or requires an interactive session.'),
+      paperId,
+      isReaderRequired
     });
 
   } catch (err) {
     console.error('PDF Download Error:', err);
+    const isNetworkError = err.name === 'TypeError' && err.message.toLowerCase().includes('fetch');
+    const ieeeArnum = extractClientIeeeArnumber(targetUrl, doi);
+    const directReaderUrl = ieeeArnum ? `https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=${ieeeArnum}` : null;
+    const isReaderRequired = Boolean(ieeeArnum);
+
+    let userReason = err.message;
+    if (isNetworkError) {
+      userReason = ieeeArnum
+        ? 'Could not connect through local backend proxy. However, you can open and read this paper directly in the IEEE publisher reader below.'
+        : 'Unable to connect to the LitSeeker local server. The server may be restarting or offline. Please verify that "npm start" is running on http://localhost:3005.';
+    }
+
     window.showPdfFallbackModal({
       title,
       doi,
-      targetUrl: targetUrl || doi,
-      reason: err.message,
-      paperId
+      targetUrl: directReaderUrl || (ieeeArnum ? `https://ieeexplore.ieee.org/document/${ieeeArnum}` : (targetUrl || doi)),
+      directReaderUrl,
+      reason: userReason,
+      paperId,
+      isReaderRequired,
+      isNetworkError
     });
   } finally {
     if (btn) {
@@ -1654,7 +1734,7 @@ window.downloadPaperPdf = async function(event, paperId, rawTargetUrl, rawFilena
   }
 };
 
-window.showPdfFallbackModal = function({ title, doi, targetUrl, reason, paperId }) {
+window.showPdfFallbackModal = function({ title, doi, targetUrl, directReaderUrl, reason, paperId, isReaderRequired, isNetworkError }) {
   let modal = document.getElementById('pdfFallbackModal');
   if (!modal) {
     modal = document.createElement('div');
@@ -1664,18 +1744,25 @@ window.showPdfFallbackModal = function({ title, doi, targetUrl, reason, paperId 
   }
 
   const cleanDoi = doi ? (doi.startsWith('http') ? doi : `https://doi.org/${doi}`) : '';
-  const openUrl = targetUrl || cleanDoi;
+  const ieeeArnum = extractClientIeeeArnumber(targetUrl, doi);
+  const canonicalReaderUrl = directReaderUrl || (ieeeArnum ? `https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=${ieeeArnum}` : null);
+  const portalUrl = (ieeeArnum ? `https://ieeexplore.ieee.org/document/${ieeeArnum}` : null) || cleanDoi || targetUrl;
+  const isIeee = Boolean(ieeeArnum || (canonicalReaderUrl && canonicalReaderUrl.includes('ieeexplore.ieee.org')));
 
   modal.innerHTML = `
     <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 toast-slide-in">
       <div class="flex items-start justify-between gap-3">
         <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          <div class="w-9 h-9 rounded-xl ${isReaderRequired ? 'bg-indigo-500/20 text-indigo-400' : (isNetworkError ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400')} flex items-center justify-center shrink-0">
+            <i data-lucide="${isReaderRequired ? 'book-open' : (isNetworkError ? 'wifi-off' : 'shield-alert')}" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-sm font-bold text-white leading-snug">Interactive Reader Required</h3>
-            <p class="text-[11px] text-slate-400">Upstream publisher restricted raw binary streaming</p>
+            <h3 class="text-sm font-bold text-white leading-snug">
+              ${isReaderRequired ? 'Interactive Reader Available' : (isNetworkError ? 'Connection Notice' : 'Interactive Reader Required')}
+            </h3>
+            <p class="text-[11px] text-slate-400">
+              ${isReaderRequired ? 'Access the full-text PDF via the publisher\'s reader' : (isNetworkError ? 'Local LitSeeker server could not be reached' : 'Publisher restricted raw binary backend streaming')}
+            </p>
           </div>
         </div>
         <button onclick="window.closePdfFallbackModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
@@ -1685,20 +1772,38 @@ window.showPdfFallbackModal = function({ title, doi, targetUrl, reason, paperId 
 
       <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 space-y-2">
         <div class="font-semibold text-slate-200 line-clamp-2">${title}</div>
-        <p class="text-[11px] text-amber-300/90 leading-relaxed">
+        <p class="text-[11px] ${isReaderRequired ? 'text-indigo-300/90' : (isNetworkError ? 'text-rose-300/90' : 'text-amber-300/90')} leading-relaxed">
           ${reason}
         </p>
         <p class="text-[11px] text-slate-400 leading-relaxed">
-          Major academic repositories (such as IEEE Xplore, ScienceDirect, or Springer) protect full-text downloads with interactive sessions, CAPTCHA, or custom browser readers. You can read the paper directly on the publisher portal or check for open repository preprints.
+          ${isIeee
+            ? 'IEEE Xplore delivers this open-access paper under CC BY 4.0 via its interactive browser reader. While automated backend proxies are restricted by IEEE CloudFront anti-bot protection, you can freely view and download the official PDF directly in your browser.'
+            : (isNetworkError
+              ? 'You can still open and read the paper directly on the publisher portal or reader link below.'
+              : 'Major academic repositories (such as IEEE Xplore, ScienceDirect, or Springer) protect full-text downloads with interactive browser sessions, CAPTCHA, or custom readers. You can read and download the PDF directly in your browser.')}
         </p>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-800">
-        ${openUrl ? `
-          <a href="${openUrl}" target="_blank" rel="noopener noreferrer"
+        ${canonicalReaderUrl ? `
+          <a href="${canonicalReaderUrl}" target="_blank" rel="noopener noreferrer"
+            class="flex-1 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/30 transition-all">
+            <i data-lucide="book-open" class="w-4 h-4"></i>
+            <span>Open PDF in Publisher Reader</span>
+          </a>
+        ` : (portalUrl ? `
+          <a href="${portalUrl}" target="_blank" rel="noopener noreferrer"
             class="flex-1 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/30 transition-all">
             <i data-lucide="external-link" class="w-4 h-4"></i>
             <span>Open Paper on Publisher Portal</span>
+          </a>
+        ` : '')}
+
+        ${portalUrl && canonicalReaderUrl && portalUrl !== canonicalReaderUrl ? `
+          <a href="${portalUrl}" target="_blank" rel="noopener noreferrer"
+            class="px-3.5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="external-link" class="w-4 h-4"></i>
+            <span>Publisher Portal</span>
           </a>
         ` : ''}
 

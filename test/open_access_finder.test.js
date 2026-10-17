@@ -13,7 +13,10 @@ const {
   validateSafeUrl,
   sanitizeFilename,
   verifyCandidateUrl,
-  proxyPdfStream
+  proxyPdfStream,
+  extractIeeeArnumber,
+  resolveIeeeArnumber,
+  resolveIeeePdf
 } = require('../lib/pdf_resolver');
 const {
   findUnpaywallVersions,
@@ -285,4 +288,61 @@ test('API: PDF Proxy handles HTML landing pages and upstream errors safely witho
     server.close();
   }
 });
+
+test('IEEE Resolver: Correctly extracts arnumber across URL and query variations', () => {
+  assert.equal(extractIeeeArnumber('https://ieeexplore.ieee.org/document/10192897'), '10192897');
+  assert.equal(extractIeeeArnumber('https://ieeexplore.ieee.org/document/10192897/'), '10192897');
+  assert.equal(extractIeeeArnumber('https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10192897'), '10192897');
+  assert.equal(extractIeeeArnumber('https://ieeexplore.ieee.org/ielx7/6287639/6514899/10192897.pdf'), '10192897');
+  assert.equal(extractIeeeArnumber('https://example.com/not-ieee/10192897'), null);
+  assert.equal(extractIeeeArnumber(''), null);
+});
+
+test('API: Open-Access discover route aliases (/api/oa/discover) return structured candidate versions', async () => {
+  const server = app.listen(0);
+  const port = server.address().port;
+
+  try {
+    const res = await fetch(`http://localhost:${port}/api/oa/discover?doi=10.1109/access.2023.3298704`);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.success, true);
+    assert.ok(Array.isArray(body.versions));
+    assert.ok(body.versions.length > 0);
+  } finally {
+    server.close();
+  }
+});
+
+test('IEEE Resolver: Asynchronously resolves IEEE arnumber from DOI redirection', async () => {
+  const arnum = await resolveIeeeArnumber('10.1109/access.2023.3298704');
+  assert.equal(arnum, '10192897');
+  const nonIeee = await resolveIeeeArnumber('10.1038/nature12373');
+  assert.equal(nonIeee, null);
+});
+
+test('API: PDF Proxy handles DOI parameter and provides structured JSON when publisher reader is required', async () => {
+  const server = app.listen(0);
+  const port = server.address().port;
+
+  try {
+    // Missing both url and doi
+    const resNoParams = await fetch(`http://localhost:${port}/api/pdf/proxy`);
+    assert.equal(resNoParams.status, 400);
+
+    // Call with DOI
+    const resDoi = await fetch(`http://localhost:${port}/api/pdf/proxy?doi=10.1109/access.2023.3298704`);
+    // Should either stream the 200 PDF or return structured 422 reader required payload
+    assert.ok(resDoi.status === 200 || resDoi.status === 422);
+    if (resDoi.status === 422) {
+      const data = await resDoi.json();
+      assert.equal(data.error, 'publisher_reader_required');
+      assert.ok(data.directReaderUrl && data.directReaderUrl.includes('10192897'));
+    }
+  } finally {
+    server.close();
+  }
+});
+
+
 

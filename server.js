@@ -182,14 +182,27 @@ app.post('/api/synthesize', (req, res) => {
 
 // PDF Proxy & Streaming Endpoint
 app.get('/api/pdf/proxy', (req, res) => {
-  const targetUrl = req.query.url;
+  let targetUrl = req.query.url;
+  const doi = req.query.doi;
   const filename = req.query.filename || 'academic_paper.pdf';
+
+  if (!targetUrl && doi) {
+    targetUrl = doi.startsWith('http') ? doi : `https://doi.org/${doi}`;
+  }
 
   if (!targetUrl) {
     return res.status(400).send('Missing "url" parameter');
   }
 
-  proxyPdfStream(targetUrl, res, filename);
+  proxyPdfStream(targetUrl, res, filename).catch((err) => {
+    console.error(`[PDF Proxy Uncaught Error]: ${err.message}`);
+    if (!res.headersSent) {
+      res.status(502).json({
+        error: 'proxy_failed',
+        message: `Failed to proxy academic document: ${err.message}`
+      });
+    }
+  });
 });
 
 // --- Open Access Paper Finder Endpoints ---
@@ -215,7 +228,8 @@ const handleOpenAccessFind = async (req, res) => {
       publicationYear: year ? parseInt(year, 10) : null
     };
 
-    const result = await findFreeVersions(target, { verifyUrls: true });
+    const skipCache = req.query.refresh === 'true' || req.query.skipCache === 'true';
+    const result = await findFreeVersions(target, { verifyUrls: true, skipCache });
     res.json(result);
   } catch (err) {
     console.error(`[OA Finder Error]: ${err.message}`);
@@ -225,6 +239,12 @@ const handleOpenAccessFind = async (req, res) => {
 
 app.get('/api/open-access/find', handleOpenAccessFind);
 app.post('/api/open-access/find', handleOpenAccessFind);
+app.get('/api/oa/discover', handleOpenAccessFind);
+app.post('/api/oa/discover', handleOpenAccessFind);
+app.get('/api/open-access/discover', handleOpenAccessFind);
+app.post('/api/open-access/discover', handleOpenAccessFind);
+app.get('/api/oa/find', handleOpenAccessFind);
+app.post('/api/oa/find', handleOpenAccessFind);
 
 app.post('/api/open-access/verify', async (req, res) => {
   const { url } = req.body;
